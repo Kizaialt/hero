@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width,initial-scale=1" />
-<title>Batch Watermark — Client-side</title>
+<title>Batch Watermark — Fixed Logo</title>
 
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -25,7 +25,7 @@
   h1 { margin: 0 0 10px; font-size: 22px; }
   h2 { margin: 0 0 10px; font-size: 16px; opacity:.9; }
   label { display:block; margin:10px 0 6px; font-size:12px; opacity:.9; }
-  input[type="file"], select, input[type="number"], input[type="text"], input[type="range"] {
+  input[type="file"], select, input[type="number"], input[type="range"] {
     width:100%; padding:10px; background:#0f1320; border:1px solid #2a3147; color:#eaeef4;
     border-radius:10px; outline:none;
   }
@@ -46,7 +46,7 @@
     display:flex; align-items:center; justify-content:center; aspect-ratio: 1 / 1;
     position: relative;
   }
-  .thumb canvas, .thumb img { max-width:100%; max-height:100%; }
+  .thumb img { max-width:100%; max-height:100%; }
   .cap {
     position:absolute; left:8px; bottom:8px; font-size:11px; opacity:.85;
     background:rgba(0,0,0,.45); padding:5px 8px; border-radius:8px;
@@ -60,14 +60,13 @@
   <div class="wrap">
     <div class="grid">
       <div class="card">
-        <h1>Batch Watermark</h1>
-        <div class="note">All processing happens locally in your browser. Nothing is uploaded.</div>
+        <h1>Batch Watermark (Fixed Logo)</h1>
+        <div class="note">
+          Watermark is permanently built-in. Upload photos → Process → Download ZIP. Nothing is uploaded anywhere.
+        </div>
 
         <label>Photos (select multiple)</label>
         <input id="photos" type="file" accept="image/*" multiple />
-
-        <label style="margin-top:12px;">Watermark image (PNG/SVG recommended, transparent)</label>
-        <input id="wm" type="file" accept="image/*,.svg" />
 
         <div class="row" style="margin-top:6px;">
           <div>
@@ -114,14 +113,14 @@
         </div>
 
         <div class="btns">
-          <button id="previewBtn" class="secondary" disabled>Preview</button>
           <button id="processBtn" disabled>Process All</button>
           <button id="zipBtn" class="secondary" disabled>Download ZIP</button>
           <button id="clearBtn" class="secondary">Clear</button>
         </div>
 
+        <div class="note" id="wmStatus">Loading watermark…</div>
         <div class="note">
-          Tips: For a subtle, professional look use opacity 25–40% and scale 18–24%. Tiled is useful when you must discourage re-use.
+          Suggested: opacity 25–40% and scale 18–24% for clean real estate branding.
         </div>
       </div>
 
@@ -139,8 +138,12 @@
 <script>
 (() => {
   const $ = sel => document.querySelector(sel);
+
+  // ✅ CHANGE THIS to your permanent URL (GitHub Pages is ideal)
+  // Example: "https://yourname.github.io/wepro-assets/wepro.png"
+  const WATERMARK_URL = "https://kizaialt.github.io/hero/wepro.png";
+
   const photosEl = $('#photos');
-  const wmEl = $('#wm');
   const posEl = $('#pos');
   const scaleEl = $('#scale');
   const opacityEl = $('#opacity');
@@ -148,28 +151,27 @@
   const qualityEl = $('#quality');
   const maxSideEl = $('#maxSide');
 
-  const previewBtn = $('#previewBtn');
   const processBtn = $('#processBtn');
   const zipBtn = $('#zipBtn');
   const clearBtn = $('#clearBtn');
   const gallery = $('#gallery');
   const statusEl = $('#status');
+  const wmStatus = $('#wmStatus');
   const opv = $('#opv');
 
   let photoFiles = [];
   let watermarkImg = null;
   let results = []; // {name, blob}
 
+  function clamp(n, a, b){ return Math.max(a, Math.min(b, n)); }
+
   function reset() {
     photoFiles = [];
-    watermarkImg = null;
     results = [];
     photosEl.value = "";
-    wmEl.value = "";
     gallery.innerHTML = "";
     statusEl.textContent = "";
-    previewBtn.disabled = true;
-    processBtn.disabled = true;
+    processBtn.disabled = !(photoFiles.length && watermarkImg);
     zipBtn.disabled = true;
   }
 
@@ -191,24 +193,20 @@
     const ih = img.naturalHeight || img.height;
     const ir = iw / ih, dr = W / H;
     let sx=0, sy=0, sw=iw, sh=ih;
-    if (ir > dr) { // wider
-      sh = ih; sw = ih * dr; sx = (iw - sw)/2; sy = 0;
-    } else { // taller
-      sw = iw; sh = iw / dr; sx = 0; sy = (ih - sh)/2;
-    }
+    if (ir > dr) { sh = ih; sw = ih * dr; sx = (iw - sw)/2; sy = 0; }
+    else { sw = iw; sh = iw / dr; sx = 0; sy = (ih - sh)/2; }
     ctx.drawImage(img, sx, sy, sw, sh, 0, 0, W, H);
   }
 
-  function maybeResize(img, maxSide) {
-    if (!maxSide || maxSide <= 0) return {W: img.width, H: img.height};
-    const s = Math.max(img.width, img.height);
-    if (s <= maxSide) return {W: img.width, H: img.height};
+  function maybeResizeDims(w, h, maxSide) {
+    if (!maxSide || maxSide <= 0) return {W: w, H: h};
+    const s = Math.max(w, h);
+    if (s <= maxSide) return {W: w, H: h};
     const r = maxSide / s;
-    return {W: Math.round(img.width * r), H: Math.round(img.height * r)};
+    return {W: Math.round(w * r), H: Math.round(h * r)};
   }
 
-  function placePoints(pos, W, H, wW, wH, pad) {
-    // returns {x, y} top-left for single placement
+  function placePoint(pos, W, H, wW, wH, pad) {
     const map = {
       'bottom-center': {x: Math.round((W - wW)/2), y: H - wH - pad},
       'bottom-right':  {x: W - wW - pad, y: H - wH - pad},
@@ -236,26 +234,31 @@
   async function renderOne(img, wm, opts) {
     const {position, scalePct, opacityPct, padding, quality, maxSide} = opts;
 
-    const {W, H} = maybeResize(img, maxSide);
+    const iw = img.naturalWidth || img.width;
+    const ih = img.naturalHeight || img.height;
+    const dims = maybeResizeDims(iw, ih, maxSide);
+    const W = dims.W, H = dims.H;
+
     const can = document.createElement('canvas');
     can.width = W; can.height = H;
     const ctx = can.getContext('2d');
 
-    // Base image (fit/cover)
     drawCover(ctx, img, W, H);
 
-    // Compute watermark size
-    const wmScale = Math.max(0.01, Math.min(0.8, scalePct/100));
+    // watermark size
+    const wmScale = clamp(scalePct/100, 0.01, 0.8);
     const targetW = Math.round(W * wmScale);
-    const ratio = (wm.width || wm.naturalWidth) / (wm.height || wm.naturalHeight);
+    const wmW = (wm.naturalWidth || wm.width);
+    const wmH = (wm.naturalHeight || wm.height);
+    const ratio = wmW / wmH;
     const targetH = Math.round(targetW / ratio);
 
-    const opacity = Math.max(0, Math.min(1, opacityPct/100));
+    const opacity = clamp(opacityPct/100, 0, 1);
 
     if (position === 'tiled') {
       drawTiled(ctx, wm, W, H, targetW, targetH, opacity);
     } else {
-      const pt = placePoints(position, W, H, targetW, targetH, padding);
+      const pt = placePoint(position, W, H, targetW, targetH, padding);
       ctx.save();
       ctx.globalAlpha = opacity;
       ctx.drawImage(wm, pt.x, pt.y, targetW, targetH);
@@ -267,38 +270,22 @@
     });
   }
 
-  function makeThumb(name, blobOrImg) {
+  function makeThumb(name, blob) {
     const box = document.createElement('div');
     box.className = 'thumb';
+
     const cap = document.createElement('div');
     cap.className = 'cap';
     cap.textContent = name;
     box.appendChild(cap);
-    if (blobOrImg instanceof Blob) {
-      const url = URL.createObjectURL(blobOrImg);
-      const img = new Image();
-      img.onload = () => URL.revokeObjectURL(url);
-      img.src = url;
-      box.appendChild(img);
-    } else {
-      // Image element preview
-      box.appendChild(blobOrImg);
-    }
+
+    const url = URL.createObjectURL(blob);
+    const img = new Image();
+    img.onload = () => URL.revokeObjectURL(url);
+    img.src = url;
+    box.appendChild(img);
+
     gallery.appendChild(box);
-  }
-
-  async function handlePreview() {
-    gallery.innerHTML = "";
-    statusEl.textContent = "";
-    if (!photoFiles.length || !watermarkImg) return;
-
-    // Show small previews (no processing) just to confirm selection
-    for (const f of photoFiles.slice(0, 9)) {
-      const img = await fileToImage(f);
-      const ph = document.createElement('img');
-      ph.src = URL.createObjectURL(f);
-      makeThumb(f.name, ph);
-    }
   }
 
   async function processAll() {
@@ -312,11 +299,10 @@
       scalePct: Number(scaleEl.value),
       opacityPct: Number(opacityEl.value),
       padding: Number(padEl.value),
-      quality: Math.max(0.6, Math.min(1, Number(qualityEl.value || 0.92))),
+      quality: clamp(Number(qualityEl.value || 0.92), 0.6, 1.0),
       maxSide: Number(maxSideEl.value || 0)
     };
 
-    // Process sequentially to avoid memory spikes
     for (let i = 0; i < photoFiles.length; i++) {
       const f = photoFiles[i];
       try {
@@ -330,6 +316,7 @@
         console.error('Failed:', f.name, e);
       }
     }
+
     statusEl.textContent = `Done: ${results.length} file(s).`;
     zipBtn.disabled = results.length === 0;
   }
@@ -338,11 +325,12 @@
     if (!results.length) return;
     const zip = new JSZip();
     const folder = zip.folder('watermarked') || zip;
-    for (const r of results) {
-      folder.file(r.name, r.blob);
-    }
+
+    for (const r of results) folder.file(r.name, r.blob);
+
     statusEl.textContent = 'Zipping...';
     const blob = await zip.generateAsync({type: 'blob'});
+
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a');
     const dt = new Date();
@@ -353,31 +341,46 @@
     a.click();
     a.remove();
     URL.revokeObjectURL(url);
-    statusEl.textContent = 'ZIP ready.';
+
+    statusEl.textContent = 'ZIP downloaded.';
+  }
+
+  // Load watermark permanently
+  async function loadWatermark() {
+    if (!WATERMARK_URL || WATERMARK_URL.includes("REPLACE_WITH")) {
+      wmStatus.textContent = "❌ Set WATERMARK_URL in the code first.";
+      return;
+    }
+    return new Promise((resolve, reject) => {
+      const img = new Image();
+      img.crossOrigin = "anonymous"; // needed for canvas export with remote asset
+      img.onload = () => {
+        watermarkImg = img;
+        wmStatus.textContent = "✅ Watermark loaded (fixed).";
+        processBtn.disabled = !(photoFiles.length && watermarkImg);
+        resolve();
+      };
+      img.onerror = () => {
+        wmStatus.textContent = "❌ Failed to load watermark. Check the URL (must be public).";
+        reject(new Error("Watermark load failed"));
+      };
+      img.src = WATERMARK_URL;
+    });
   }
 
   photosEl.addEventListener('change', (e) => {
     photoFiles = Array.from(e.target.files || []);
-    previewBtn.disabled = !(photoFiles.length && watermarkImg);
     processBtn.disabled = !(photoFiles.length && watermarkImg);
+    zipBtn.disabled = true;
   });
 
-  wmEl.addEventListener('change', async (e) => {
-    const f = e.target.files?.[0];
-    if (!f) { watermarkImg = null; previewBtn.disabled = true; processBtn.disabled = true; return; }
-    // load watermark image
-    const img = await fileToImage(f);
-    watermarkImg = img;
-    previewBtn.disabled = !(photoFiles.length && watermarkImg);
-    processBtn.disabled = !(photoFiles.length && watermarkImg);
-  });
-
-  previewBtn.addEventListener('click', handlePreview);
   processBtn.addEventListener('click', processAll);
   zipBtn.addEventListener('click', downloadZip);
 
-  // Init
+  // init
   reset();
+  loadWatermark();
+
 })();
 </script>
 </body>
