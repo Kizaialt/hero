@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width,initial-scale=1" />
-<title>Batch Watermark Tool</title>
+<title>Лого оруулагч</title>
 
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -115,49 +115,46 @@ button:disabled { opacity:.55; cursor:not-allowed; }
       <label>Photos (multiple)</label>
       <input id="photos" type="file" accept="image/*" multiple />
 
-      <label>Logo variation</label>
+      <label>Лого Сонгох</label>
       <select id="wmPick"></select>
-      <div id="wmStatus" class="note">Loading watermark…</div>
+      <div id="wmStatus" class="note">Лого уншиж байна...</div>
 
       <div class="row">
         <div>
-          <label>Placement</label>
+          <label>Байрлал</label>
           <select id="pos">
-            <option value="bottom-center">Bottom center</option>
-            <option value="bottom-right">Bottom right</option>
-            <option value="bottom-left">Bottom left</option>
-            <option value="top-right">Top right</option>
-            <option value="top-left">Top left</option>
-            <option value="center">Center</option>
+            <option value="bottom-center">Доод | Голд</option>
+            <option value="bottom-right">Доод | Баруун</option>
+            <option value="bottom-left">Доод | Зүүн</option>
+            <option value="top-right">Дээд | Баруун</option>
+            <option value="top-left">Дээд | Зүүн</option>
+            <option value="center">Голд | Голд</option>
             <option value="tiled">Tiled</option>
           </select>
         </div>
         <div>
-          <label>Size (% of width)</label>
+          <label>Хэмжээс (өргөнөөс %-иар)</label>
           <input id="scale" type="number" value="15" min="2" max="80" />
         </div>
       </div>
 
-      <div class="row">
-        <div>
-          <label>Opacity</label>
+      <div>
+        <label>Хэр Тод</label>
+        <div style="display:flex; align-items:center; gap:10px;">
           <input id="opacity" type="range" value="100" min="0" max="100" />
-        </div>
-        <div>
-          <label>Padding (px)</label>
-          <input id="pad" type="number" value="50" />
+          <span id="opacityVal" style="min-width:40px; font-size:12px;">100%</span>
         </div>
       </div>
 
       <div class="btns">
-        <button id="previewBtn" class="secondary" disabled>Preview First</button>
-        <button id="processBtn" disabled>Process All</button>
-        <button id="clearBtn" class="secondary">Clear</button>
+        <button id="previewBtn" class="secondary" disabled>Урьдчилж харах</button>
+        <button id="processBtn" disabled>Бүгдийг татаж авах</button>
+        <button id="clearBtn" class="secondary">Цэвэрлэх</button>
       </div>
     </div>
 
     <div class="card">
-      <h2>Preview</h2>
+      <h2>Урьдчилж харах</h2>
       <div id="gallery" class="gallery"></div>
       <div id="status" class="note"></div>
     </div>
@@ -181,6 +178,7 @@ const wmPick = $('#wmPick');
 const wmStatus = $('#wmStatus');
 const posEl = $('#pos');
 const scaleEl = $('#scale');
+const opacityVal = $('#opacityVal');
 const opacityEl = $('#opacity');
 const padEl = $('#pad');
 const previewBtn = $('#previewBtn');
@@ -236,6 +234,10 @@ async function renderOne(img,wm){
 
   ctx.globalAlpha=opacityEl.value/100;
   ctx.drawImage(wm,x,y,wW,wH);
+  opacityEl.addEventListener('input', () => {
+  opacityVal.textContent = opacityEl.value + '%';
+});
+
 
   return new Promise(r=>c.toBlob(b=>r(b),'image/jpeg',0.92));
 }
