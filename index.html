@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width,initial-scale=1" />
-<title>Batch Watermark — Fixed Logo</title>
+<title>Batch Watermark — 3 Logo Variations (No ZIP)</title>
 
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -17,7 +17,7 @@
     background:#0f1115; color:#eaeef4;
   }
   .wrap { max-width: 1100px; margin: 28px auto; padding: 0 16px; }
-  .grid { display:grid; grid-template-columns: 340px 1fr; gap:16px; }
+  .grid { display:grid; grid-template-columns: 360px 1fr; gap:16px; }
   @media (max-width: 980px) { .grid { grid-template-columns: 1fr; } }
   .card {
     background:#141826; border:1px solid #222940; border-radius:14px; padding:16px;
@@ -60,13 +60,18 @@
   <div class="wrap">
     <div class="grid">
       <div class="card">
-        <h1>Batch Watermark (Fixed Logo)</h1>
+        <h1>Batch Watermark (3 Logo Variations)</h1>
         <div class="note">
-          Watermark is permanently built-in. Upload photos → Process → Download ZIP. Nothing is uploaded anywhere.
+          Choose a watermark → upload photos → Process All → each file downloads automatically.
+          Nothing is uploaded anywhere.
         </div>
 
         <label>Photos (select multiple)</label>
         <input id="photos" type="file" accept="image/*" multiple />
+
+        <label>Watermark variation</label>
+        <select id="wmPick"></select>
+        <div class="note" id="wmStatus">Loading watermark…</div>
 
         <div class="row" style="margin-top:6px;">
           <div>
@@ -113,37 +118,38 @@
         </div>
 
         <div class="btns">
-          <button id="processBtn" disabled>Process All</button>
-          <button id="zipBtn" class="secondary" disabled>Download ZIP</button>
+          <button id="processBtn" disabled>Process All (Auto Download)</button>
           <button id="clearBtn" class="secondary">Clear</button>
         </div>
 
-        <div class="note" id="wmStatus">Loading watermark…</div>
         <div class="note">
-          Suggested: opacity 25–40% and scale 18–24% for clean real estate branding.
+          If Chrome blocks many downloads, allow downloads for this site once.
         </div>
       </div>
 
       <div class="card">
-        <h2>Output preview</h2>
+        <h2>Preview</h2>
         <div id="gallery" class="gallery"></div>
         <div id="status" class="note"></div>
       </div>
     </div>
   </div>
 
-  <!-- JSZip for ZIP downloads -->
-  <script src="https://cdn.jsdelivr.net/npm/jszip@3.10.1/dist/jszip.min.js"></script>
-
 <script>
 (() => {
   const $ = sel => document.querySelector(sel);
 
-  // ✅ CHANGE THIS to your permanent URL (GitHub Pages is ideal)
-  // Example: "https://yourname.github.io/wepro-assets/wepro.png"
-  const WATERMARK_URL = "https://kizaialt.github.io/hero/wepro.png";
+  // ✅ Replace URLs below with your 3 hosted watermark files
+  const WATERMARKS = [
+    { id: "wm1", name: "Цагаан", url: "https://kizaialt.github.io/hero/wepro.png" },
+    { id: "wm2", name: "Шар",           url: "https://kizaialt.github.io/hero/wepro2.png" },
+    { id: "wm3", name: "Бүтэн",           url: "https://kizaialt.github.io/hero/wepro3.png" },
+  ];
 
   const photosEl = $('#photos');
+  const wmPickEl = $('#wmPick');
+  const wmStatus = $('#wmStatus');
+
   const posEl = $('#pos');
   const scaleEl = $('#scale');
   const opacityEl = $('#opacity');
@@ -152,27 +158,34 @@
   const maxSideEl = $('#maxSide');
 
   const processBtn = $('#processBtn');
-  const zipBtn = $('#zipBtn');
   const clearBtn = $('#clearBtn');
   const gallery = $('#gallery');
   const statusEl = $('#status');
-  const wmStatus = $('#wmStatus');
   const opv = $('#opv');
 
   let photoFiles = [];
-  let watermarkImg = null;
-  let results = []; // {name, blob}
+  const watermarkCache = new Map(); // id -> HTMLImageElement
+  let activeWatermarkId = WATERMARKS[0]?.id || "wm1";
 
   function clamp(n, a, b){ return Math.max(a, Math.min(b, n)); }
 
+  function downloadBlob(blob, filename) {
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = filename;
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+    URL.revokeObjectURL(url);
+  }
+
   function reset() {
     photoFiles = [];
-    results = [];
     photosEl.value = "";
     gallery.innerHTML = "";
     statusEl.textContent = "";
-    processBtn.disabled = !(photoFiles.length && watermarkImg);
-    zipBtn.disabled = true;
+    processBtn.disabled = !(photoFiles.length && watermarkCache.get(activeWatermarkId));
   }
 
   clearBtn.addEventListener('click', reset);
@@ -245,7 +258,6 @@
 
     drawCover(ctx, img, W, H);
 
-    // watermark size
     const wmScale = clamp(scalePct/100, 0.01, 0.8);
     const targetW = Math.round(W * wmScale);
     const wmW = (wm.naturalWidth || wm.width);
@@ -289,10 +301,11 @@
   }
 
   async function processAll() {
-    if (!photoFiles.length || !watermarkImg) return;
-    results = [];
+    const wm = watermarkCache.get(activeWatermarkId);
+    if (!photoFiles.length || !wm) return;
+
     gallery.innerHTML = "";
-    statusEl.textContent = "Processing...";
+    statusEl.textContent = "Processing (and downloading)…";
 
     const opts = {
       position: posEl.value,
@@ -307,79 +320,87 @@
       const f = photoFiles[i];
       try {
         const img = await fileToImage(f);
-        const blob = await renderOne(img, watermarkImg, opts);
-        const outName = f.name.replace(/\.(jpg|jpeg|png|webp|gif|bmp|tif|tiff)$/i, '') + '_wm.jpg';
-        results.push({name: outName, blob});
+        const blob = await renderOne(img, wm, opts);
+
+        const outName = f.name
+          .replace(/\.(jpg|jpeg|png|webp|gif|bmp|tif|tiff)$/i, '')
+          + `_wm_${activeWatermarkId}.jpg`;
+
+        downloadBlob(blob, outName);
         makeThumb(outName, blob);
-        statusEl.textContent = `Processed ${i+1} / ${photoFiles.length}`;
+
+        statusEl.textContent = `Processed ${i+1} / ${photoFiles.length} (downloaded)`;
+        await new Promise(r => setTimeout(r, 120)); // helps Chrome not block
       } catch (e) {
         console.error('Failed:', f.name, e);
       }
     }
 
-    statusEl.textContent = `Done: ${results.length} file(s).`;
-    zipBtn.disabled = results.length === 0;
+    statusEl.textContent = `Done: ${photoFiles.length} file(s).`;
   }
 
-  async function downloadZip() {
-    if (!results.length) return;
-    const zip = new JSZip();
-    const folder = zip.folder('watermarked') || zip;
-
-    for (const r of results) folder.file(r.name, r.blob);
-
-    statusEl.textContent = 'Zipping...';
-    const blob = await zip.generateAsync({type: 'blob'});
-
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    const dt = new Date();
-    const ts = dt.toISOString().slice(0,19).replace(/[:T]/g,'-');
-    a.href = url;
-    a.download = `watermarked-${ts}.zip`;
-    document.body.appendChild(a);
-    a.click();
-    a.remove();
-    URL.revokeObjectURL(url);
-
-    statusEl.textContent = 'ZIP downloaded.';
+  function populateDropdown() {
+    wmPickEl.innerHTML = "";
+    for (const w of WATERMARKS) {
+      const opt = document.createElement('option');
+      opt.value = w.id;
+      opt.textContent = w.name;
+      wmPickEl.appendChild(opt);
+    }
+    wmPickEl.value = activeWatermarkId;
   }
 
-  // Load watermark permanently
-  async function loadWatermark() {
-    if (!WATERMARK_URL || WATERMARK_URL.includes("REPLACE_WITH")) {
-      wmStatus.textContent = "❌ Set WATERMARK_URL in the code first.";
+  function loadWatermarkById(id) {
+    const item = WATERMARKS.find(x => x.id === id);
+    if (!item) return;
+
+    activeWatermarkId = id;
+    const url = item.url;
+
+    if (!url || url.startsWith("REPLACE_")) {
+      wmStatus.textContent = "❌ Put your watermark URLs in WATERMARKS[] first.";
+      processBtn.disabled = true;
       return;
     }
-    return new Promise((resolve, reject) => {
-      const img = new Image();
-      img.crossOrigin = "anonymous"; // needed for canvas export with remote asset
-      img.onload = () => {
-        watermarkImg = img;
-        wmStatus.textContent = "✅ Watermark loaded (fixed).";
-        processBtn.disabled = !(photoFiles.length && watermarkImg);
-        resolve();
-      };
-      img.onerror = () => {
-        wmStatus.textContent = "❌ Failed to load watermark. Check the URL (must be public).";
-        reject(new Error("Watermark load failed"));
-      };
-      img.src = WATERMARK_URL;
-    });
+
+    // Already cached
+    if (watermarkCache.has(id)) {
+      wmStatus.textContent = `✅ Loaded: ${item.name}`;
+      processBtn.disabled = !(photoFiles.length);
+      return;
+    }
+
+    wmStatus.textContent = `Loading: ${item.name}…`;
+    const img = new Image();
+    img.crossOrigin = "anonymous"; // needed for canvas export with remote asset
+    img.onload = () => {
+      watermarkCache.set(id, img);
+      wmStatus.textContent = `✅ Loaded: ${item.name}`;
+      processBtn.disabled = !(photoFiles.length);
+    };
+    img.onerror = () => {
+      wmStatus.textContent = "❌ Failed to load watermark. URL must be public (GitHub Pages works best).";
+      processBtn.disabled = true;
+    };
+    img.src = url;
   }
 
   photosEl.addEventListener('change', (e) => {
     photoFiles = Array.from(e.target.files || []);
-    processBtn.disabled = !(photoFiles.length && watermarkImg);
-    zipBtn.disabled = true;
+    processBtn.disabled = !(photoFiles.length && watermarkCache.get(activeWatermarkId));
+  });
+
+  wmPickEl.addEventListener('change', () => {
+    loadWatermarkById(wmPickEl.value);
+    // button enable handled after load
   });
 
   processBtn.addEventListener('click', processAll);
-  zipBtn.addEventListener('click', downloadZip);
 
   // init
+  populateDropdown();
   reset();
-  loadWatermark();
+  loadWatermarkById(activeWatermarkId);
 
 })();
 </script>
