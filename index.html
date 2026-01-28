@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width,initial-scale=1" />
-<title>Лого оруулагч</title>
+<title>Олноор лого оруулагч</title>
 
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -20,9 +20,9 @@ body {
   color:#eaeef4;
 }
 
-.wrap { max-width: 1100px; margin: 28px auto; padding: 0 16px; }
-.grid { display:grid; grid-template-columns: 360px 1fr; gap:16px; }
-@media (max-width: 980px) { .grid { grid-template-columns: 1fr; } }
+.wrap { max-width:1100px; margin:28px auto; padding:0 16px; }
+.grid { display:grid; grid-template-columns:360px 1fr; gap:16px; }
+@media (max-width:980px){ .grid{ grid-template-columns:1fr; } }
 
 .card {
   background:#141826;
@@ -49,12 +49,12 @@ input[type="range"] {
   outline:none;
 }
 
-.row { display:grid; grid-template-columns: 1fr 1fr; gap:10px; }
+.row { display:grid; grid-template-columns:1fr 1fr; gap:10px; }
 
 .btns {
   display:flex;
   gap:10px;
-  flex-wrap: wrap;
+  flex-wrap:wrap;
   margin-top:12px;
 }
 
@@ -75,7 +75,7 @@ button:disabled { opacity:.55; cursor:not-allowed; }
 
 .gallery {
   display:grid;
-  grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+  grid-template-columns:repeat(auto-fill, minmax(220px,1fr));
   gap:12px;
 }
 
@@ -110,14 +110,14 @@ button:disabled { opacity:.55; cursor:not-allowed; }
   <div class="grid">
 
     <div class="card">
-      <h1>Batch Watermark</h1>
+      <h1>Олноор лого оруулах</h1>
 
-      <label>Photos (multiple)</label>
+      <label>Зураг оруулах</label>
       <input id="photos" type="file" accept="image/*" multiple />
 
-      <label>Лого Сонгох</label>
+      <label>Лого сонгох</label>
       <select id="wmPick"></select>
-      <div id="wmStatus" class="note">Лого уншиж байна...</div>
+      <div id="wmStatus" class="note">Лого уншиж байна…</div>
 
       <div class="row">
         <div>
@@ -133,16 +133,22 @@ button:disabled { opacity:.55; cursor:not-allowed; }
           </select>
         </div>
         <div>
-          <label>Хэмжээс (өргөнөөс %-иар)</label>
+          <label>Size (% of width)</label>
           <input id="scale" type="number" value="15" min="2" max="80" />
         </div>
       </div>
 
-      <div>
-        <label>Хэр Тод</label>
-        <div style="display:flex; align-items:center; gap:10px;">
-          <input id="opacity" type="range" value="100" min="0" max="100" />
-          <span id="opacityVal" style="min-width:40px; font-size:12px;">100%</span>
+      <div class="row">
+        <div>
+          <label>Хэр Тод</label>
+          <div style="display:flex;align-items:center;gap:10px;">
+            <input id="opacity" type="range" value="100" min="0" max="100" />
+            <span id="opacityVal" style="min-width:40px;font-size:12px;">100%</span>
+          </div>
+        </div>
+        <div>
+          <label>Зай (px)</label>
+          <input id="pad" type="number" value="50" />
         </div>
       </div>
 
@@ -154,7 +160,7 @@ button:disabled { opacity:.55; cursor:not-allowed; }
     </div>
 
     <div class="card">
-      <h2>Урьдчилж харах</h2>
+      <h2>Preview</h2>
       <div id="gallery" class="gallery"></div>
       <div id="status" class="note"></div>
     </div>
@@ -166,7 +172,7 @@ button:disabled { opacity:.55; cursor:not-allowed; }
 (() => {
 const $ = s => document.querySelector(s);
 
-/* 🔴 REPLACE THESE URLS 🔴 */
+/* 🔴 REPLACE THESE 🔴 */
 const WATERMARKS = [
   { id: "wm1", name: "Цагаан", url: "https://kizaialt.github.io/hero/wepro.png" },
   { id: "wm2", name: "Шар",           url: "https://kizaialt.github.io/hero/wepro2.png" },
@@ -178,8 +184,8 @@ const wmPick = $('#wmPick');
 const wmStatus = $('#wmStatus');
 const posEl = $('#pos');
 const scaleEl = $('#scale');
-const opacityVal = $('#opacityVal');
 const opacityEl = $('#opacity');
+const opacityVal = $('#opacityVal');
 const padEl = $('#pad');
 const previewBtn = $('#previewBtn');
 const processBtn = $('#processBtn');
@@ -191,7 +197,10 @@ let photoFiles = [];
 let watermarkCache = new Map();
 let activeWM = WATERMARKS[0].id;
 
-function clamp(n,a,b){return Math.max(a,Math.min(b,n));}
+opacityVal.textContent = opacityEl.value + '%';
+opacityEl.addEventListener('input', () => {
+  opacityVal.textContent = opacityEl.value + '%';
+});
 
 function downloadBlob(blob,name){
   const url=URL.createObjectURL(blob);
@@ -234,12 +243,19 @@ async function renderOne(img,wm){
 
   ctx.globalAlpha=opacityEl.value/100;
   ctx.drawImage(wm,x,y,wW,wH);
-  opacityEl.addEventListener('input', () => {
-  opacityVal.textContent = opacityEl.value + '%';
-});
-
 
   return new Promise(r=>c.toBlob(b=>r(b),'image/jpeg',0.92));
+}
+
+function showThumb(name,blob){
+  const d=document.createElement('div');
+  d.className="thumb";
+  const i=new Image();
+  i.src=URL.createObjectURL(blob);
+  const c=document.createElement('div');
+  c.className="cap"; c.textContent=name;
+  d.append(i,c);
+  gallery.appendChild(d);
 }
 
 async function preview(){
@@ -262,16 +278,6 @@ async function processAll(){
     await new Promise(r=>setTimeout(r,120));
   }
   statusEl.textContent="Done.";
-}
-
-function showThumb(name,blob){
-  const d=document.createElement('div');
-  d.className="thumb";
-  const i=new Image();
-  i.src=URL.createObjectURL(blob);
-  const c=document.createElement('div');
-  c.className="cap"; c.textContent=name;
-  d.append(i,c); gallery.appendChild(d);
 }
 
 function loadWM(id){
