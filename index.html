@@ -3,404 +3,303 @@
 <head>
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width,initial-scale=1" />
-<title>Batch Watermark — 3 Logo Variations (No ZIP)</title>
+<title>Batch Watermark Tool</title>
 
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@500;600;700&display=swap" rel="stylesheet">
 
 <style>
-  :root { color-scheme: dark; }
-  * { box-sizing: border-box; }
-  body {
-    margin: 0; font-family: Inter, system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif;
-    background:#0f1115; color:#eaeef4;
-  }
-  .wrap { max-width: 1100px; margin: 28px auto; padding: 0 16px; }
-  .grid { display:grid; grid-template-columns: 360px 1fr; gap:16px; }
-  @media (max-width: 980px) { .grid { grid-template-columns: 1fr; } }
-  .card {
-    background:#141826; border:1px solid #222940; border-radius:14px; padding:16px;
-  }
-  h1 { margin: 0 0 10px; font-size: 22px; }
-  h2 { margin: 0 0 10px; font-size: 16px; opacity:.9; }
-  label { display:block; margin:10px 0 6px; font-size:12px; opacity:.9; }
-  input[type="file"], select, input[type="number"], input[type="range"] {
-    width:100%; padding:10px; background:#0f1320; border:1px solid #2a3147; color:#eaeef4;
-    border-radius:10px; outline:none;
-  }
-  .row { display:grid; grid-template-columns: 1fr 1fr; gap:10px; }
-  .btns { display:flex; gap:10px; flex-wrap: wrap; margin-top:12px; }
-  button {
-    background:#7c5cff; color:#fff; border:0; padding:10px 12px; border-radius:12px;
-    font-weight:700; cursor:pointer;
-  }
-  button.secondary { background:#2a3350; }
-  button:disabled { opacity:.55; cursor:not-allowed; }
-  .note { font-size:12px; opacity:.8; margin-top:8px; line-height:1.35; }
-  .gallery {
-    display:grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap:12px;
-  }
-  .thumb {
-    background:#0b0f1c; border:1px solid #222940; border-radius:12px; overflow:hidden;
-    display:flex; align-items:center; justify-content:center; aspect-ratio: 1 / 1;
-    position: relative;
-  }
-  .thumb img { max-width:100%; max-height:100%; }
-  .cap {
-    position:absolute; left:8px; bottom:8px; font-size:11px; opacity:.85;
-    background:rgba(0,0,0,.45); padding:5px 8px; border-radius:8px;
-  }
-  .bar { display:flex; gap:8px; align-items:center; }
-  .bar input[type="range"] { width: 100%; }
-  .mono { font-family: ui-monospace, Menlo, Consolas, monospace; }
+:root { color-scheme: dark; }
+* { box-sizing: border-box; }
+
+body {
+  margin: 0;
+  font-family: Inter, system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif;
+  background:#0f1115;
+  color:#eaeef4;
+}
+
+.wrap { max-width: 1100px; margin: 28px auto; padding: 0 16px; }
+.grid { display:grid; grid-template-columns: 360px 1fr; gap:16px; }
+@media (max-width: 980px) { .grid { grid-template-columns: 1fr; } }
+
+.card {
+  background:#141826;
+  border:1px solid #222940;
+  border-radius:14px;
+  padding:16px;
+}
+
+h1 { margin:0 0 10px; font-size:22px; }
+h2 { margin:0 0 10px; font-size:16px; opacity:.9; }
+
+label { display:block; margin:10px 0 6px; font-size:12px; opacity:.9; }
+
+input[type="file"],
+select,
+input[type="number"],
+input[type="range"] {
+  width:100%;
+  padding:10px;
+  background:#0f1320;
+  border:1px solid #2a3147;
+  color:#eaeef4;
+  border-radius:10px;
+  outline:none;
+}
+
+.row { display:grid; grid-template-columns: 1fr 1fr; gap:10px; }
+
+.btns {
+  display:flex;
+  gap:10px;
+  flex-wrap: wrap;
+  margin-top:12px;
+}
+
+button {
+  background:#7c5cff;
+  color:#fff;
+  border:0;
+  padding:10px 12px;
+  border-radius:12px;
+  font-weight:700;
+  cursor:pointer;
+}
+
+button.secondary { background:#2a3350; }
+button:disabled { opacity:.55; cursor:not-allowed; }
+
+.note { font-size:12px; opacity:.8; margin-top:8px; line-height:1.35; }
+
+.gallery {
+  display:grid;
+  grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+  gap:12px;
+}
+
+.thumb {
+  background:#0b0f1c;
+  border:1px solid #222940;
+  border-radius:12px;
+  overflow:hidden;
+  aspect-ratio:1/1;
+  position:relative;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+}
+
+.thumb img { max-width:100%; max-height:100%; }
+
+.cap {
+  position:absolute;
+  left:8px;
+  bottom:8px;
+  font-size:11px;
+  background:rgba(0,0,0,.45);
+  padding:5px 8px;
+  border-radius:8px;
+}
 </style>
 </head>
+
 <body>
-  <div class="wrap">
-    <div class="grid">
-      <div class="card">
-        <h1>Batch Watermark (3 Logo Variations)</h1>
-        <div class="note">
-          Choose a watermark → upload photos → Process All → each file downloads automatically.
-          Nothing is uploaded anywhere.
+<div class="wrap">
+  <div class="grid">
+
+    <div class="card">
+      <h1>Batch Watermark</h1>
+
+      <label>Photos (multiple)</label>
+      <input id="photos" type="file" accept="image/*" multiple />
+
+      <label>Logo variation</label>
+      <select id="wmPick"></select>
+      <div id="wmStatus" class="note">Loading watermark…</div>
+
+      <div class="row">
+        <div>
+          <label>Placement</label>
+          <select id="pos">
+            <option value="bottom-center">Bottom center</option>
+            <option value="bottom-right">Bottom right</option>
+            <option value="bottom-left">Bottom left</option>
+            <option value="top-right">Top right</option>
+            <option value="top-left">Top left</option>
+            <option value="center">Center</option>
+            <option value="tiled">Tiled</option>
+          </select>
         </div>
-
-        <label>Photos (select multiple)</label>
-        <input id="photos" type="file" accept="image/*" multiple />
-
-        <label>Watermark variation</label>
-        <select id="wmPick"></select>
-        <div class="note" id="wmStatus">Loading watermark…</div>
-
-        <div class="row" style="margin-top:6px;">
-          <div>
-            <label>Placement</label>
-            <select id="pos">
-              <option value="bottom-center">Bottom center</option>
-              <option value="bottom-right">Bottom right</option>
-              <option value="bottom-left">Bottom left</option>
-              <option value="top-right">Top right</option>
-              <option value="top-left">Top left</option>
-              <option value="center">Center</option>
-              <option value="tiled">Tiled (grid)</option>
-            </select>
-          </div>
-          <div>
-            <label>Scale (% of image width)</label>
-            <input id="scale" type="number" min="2" max="80" value="15" />
-          </div>
-        </div>
-
-        <div class="row">
-          <div>
-            <label>Opacity</label>
-            <div class="bar">
-              <input id="opacity" type="range" min="0" max="100" value="100" />
-              <span id="opv" class="mono">35%</span>
-            </div>
-          </div>
-          <div>
-            <label>Padding (px)</label>
-            <input id="pad" type="number" min="0" max="200" value="50" />
-          </div>
-        </div>
-
-        <div class="row">
-          <div>
-            <label>Output: JPG quality</label>
-            <input id="quality" type="number" min="0.6" max="1" step="0.05" value="0.92" />
-          </div>
-          <div>
-            <label>Max side (px, 0 = original)</label>
-            <input id="maxSide" type="number" min="0" max="8000" value="0" />
-          </div>
-        </div>
-
-        <div class="btns">
-          <button id="processBtn" disabled>Process All (Auto Download)</button>
-          <button id="clearBtn" class="secondary">Clear</button>
-        </div>
-
-        <div class="note">
-          If Chrome blocks many downloads, allow downloads for this site once.
+        <div>
+          <label>Size (% of width)</label>
+          <input id="scale" type="number" value="15" min="2" max="80" />
         </div>
       </div>
 
-      <div class="card">
-        <h2>Preview</h2>
-        <div id="gallery" class="gallery"></div>
-        <div id="status" class="note"></div>
+      <div class="row">
+        <div>
+          <label>Opacity</label>
+          <input id="opacity" type="range" value="100" min="0" max="100" />
+        </div>
+        <div>
+          <label>Padding (px)</label>
+          <input id="pad" type="number" value="50" />
+        </div>
+      </div>
+
+      <div class="btns">
+        <button id="previewBtn" class="secondary" disabled>Preview First</button>
+        <button id="processBtn" disabled>Process All</button>
+        <button id="clearBtn" class="secondary">Clear</button>
       </div>
     </div>
+
+    <div class="card">
+      <h2>Preview</h2>
+      <div id="gallery" class="gallery"></div>
+      <div id="status" class="note"></div>
+    </div>
+
   </div>
+</div>
 
 <script>
 (() => {
-  const $ = sel => document.querySelector(sel);
+const $ = s => document.querySelector(s);
 
-  // ✅ Replace URLs below with your 3 hosted watermark files
-  const WATERMARKS = [
-    { id: "wm1", name: "Цагаан", url: "https://kizaialt.github.io/hero/wepro.png" },
-    { id: "wm2", name: "Шар",           url: "https://kizaialt.github.io/hero/wepro2.png" },
-    { id: "wm3", name: "Бүтэн Шар",           url: "https://kizaialt.github.io/hero/wepro3.png" },
-  ];
+/* 🔴 REPLACE THESE URLS 🔴 */
+const WATERMARKS = [
+  { id: "wm1", name: "Цагаан", url: "https://kizaialt.github.io/hero/wepro.png" },
+  { id: "wm2", name: "Шар",           url: "https://kizaialt.github.io/hero/wepro2.png" },
+  { id: "wm3", name: "Бүтэн Шар",           url: "https://kizaialt.github.io/hero/wepro3.png" },
+ ];
 
-  const photosEl = $('#photos');
-  const wmPickEl = $('#wmPick');
-  const wmStatus = $('#wmStatus');
+const photosEl = $('#photos');
+const wmPick = $('#wmPick');
+const wmStatus = $('#wmStatus');
+const posEl = $('#pos');
+const scaleEl = $('#scale');
+const opacityEl = $('#opacity');
+const padEl = $('#pad');
+const previewBtn = $('#previewBtn');
+const processBtn = $('#processBtn');
+const clearBtn = $('#clearBtn');
+const gallery = $('#gallery');
+const statusEl = $('#status');
 
-  const posEl = $('#pos');
-  const scaleEl = $('#scale');
-  const opacityEl = $('#opacity');
-  const padEl = $('#pad');
-  const qualityEl = $('#quality');
-  const maxSideEl = $('#maxSide');
+let photoFiles = [];
+let watermarkCache = new Map();
+let activeWM = WATERMARKS[0].id;
 
-  const processBtn = $('#processBtn');
-  const clearBtn = $('#clearBtn');
-  const gallery = $('#gallery');
-  const statusEl = $('#status');
-  const opv = $('#opv');
+function clamp(n,a,b){return Math.max(a,Math.min(b,n));}
 
-  let photoFiles = [];
-  const watermarkCache = new Map(); // id -> HTMLImageElement
-  let activeWatermarkId = WATERMARKS[0]?.id || "wm1";
+function downloadBlob(blob,name){
+  const url=URL.createObjectURL(blob);
+  const a=document.createElement('a');
+  a.href=url; a.download=name;
+  document.body.appendChild(a); a.click(); a.remove();
+  URL.revokeObjectURL(url);
+}
 
-  function clamp(n, a, b){ return Math.max(a, Math.min(b, n)); }
-
-  function downloadBlob(blob, filename) {
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = filename;
-    document.body.appendChild(a);
-    a.click();
-    a.remove();
-    URL.revokeObjectURL(url);
-  }
-
-  function reset() {
-    photoFiles = [];
-    photosEl.value = "";
-    gallery.innerHTML = "";
-    statusEl.textContent = "";
-    processBtn.disabled = !(photoFiles.length && watermarkCache.get(activeWatermarkId));
-  }
-
-  clearBtn.addEventListener('click', reset);
-  opacityEl.addEventListener('input', () => opv.textContent = opacityEl.value + '%');
-
-  function fileToImage(file) {
-    return new Promise((resolve, reject) => {
-      const url = URL.createObjectURL(file);
-      const img = new Image();
-      img.onload = () => { URL.revokeObjectURL(url); resolve(img); };
-      img.onerror = (e) => { URL.revokeObjectURL(url); reject(e); };
-      img.src = url;
-    });
-  }
-
-  function drawCover(ctx, img, W, H) {
-    const iw = img.naturalWidth || img.width;
-    const ih = img.naturalHeight || img.height;
-    const ir = iw / ih, dr = W / H;
-    let sx=0, sy=0, sw=iw, sh=ih;
-    if (ir > dr) { sh = ih; sw = ih * dr; sx = (iw - sw)/2; sy = 0; }
-    else { sw = iw; sh = iw / dr; sx = 0; sy = (ih - sh)/2; }
-    ctx.drawImage(img, sx, sy, sw, sh, 0, 0, W, H);
-  }
-
-  function maybeResizeDims(w, h, maxSide) {
-    if (!maxSide || maxSide <= 0) return {W: w, H: h};
-    const s = Math.max(w, h);
-    if (s <= maxSide) return {W: w, H: h};
-    const r = maxSide / s;
-    return {W: Math.round(w * r), H: Math.round(h * r)};
-  }
-
-  function placePoint(pos, W, H, wW, wH, pad) {
-    const map = {
-      'bottom-center': {x: Math.round((W - wW)/2), y: H - wH - pad},
-      'bottom-right':  {x: W - wW - pad, y: H - wH - pad},
-      'bottom-left':   {x: pad, y: H - wH - pad},
-      'top-right':     {x: W - wW - pad, y: pad},
-      'top-left':      {x: pad, y: pad},
-      'center':        {x: Math.round((W - wW)/2), y: Math.round((H - wH)/2)},
-    };
-    return map[pos] ?? map['bottom-center'];
-  }
-
-  function drawTiled(ctx, wm, W, H, cellW, cellH, opacity) {
-    ctx.save();
-    ctx.globalAlpha = opacity;
-    const xStep = Math.max(1, Math.round(cellW * 1.25));
-    const yStep = Math.max(1, Math.round(cellH * 1.25));
-    for (let y = -cellH; y < H + cellH; y += yStep) {
-      for (let x = -cellW; x < W + cellW; x += xStep) {
-        ctx.drawImage(wm, x, y, cellW, cellH);
-      }
-    }
-    ctx.restore();
-  }
-
-  async function renderOne(img, wm, opts) {
-    const {position, scalePct, opacityPct, padding, quality, maxSide} = opts;
-
-    const iw = img.naturalWidth || img.width;
-    const ih = img.naturalHeight || img.height;
-    const dims = maybeResizeDims(iw, ih, maxSide);
-    const W = dims.W, H = dims.H;
-
-    const can = document.createElement('canvas');
-    can.width = W; can.height = H;
-    const ctx = can.getContext('2d');
-
-    drawCover(ctx, img, W, H);
-
-    const wmScale = clamp(scalePct/100, 0.01, 0.8);
-    const targetW = Math.round(W * wmScale);
-    const wmW = (wm.naturalWidth || wm.width);
-    const wmH = (wm.naturalHeight || wm.height);
-    const ratio = wmW / wmH;
-    const targetH = Math.round(targetW / ratio);
-
-    const opacity = clamp(opacityPct/100, 0, 1);
-
-    if (position === 'tiled') {
-      drawTiled(ctx, wm, W, H, targetW, targetH, opacity);
-    } else {
-      const pt = placePoint(position, W, H, targetW, targetH, padding);
-      ctx.save();
-      ctx.globalAlpha = opacity;
-      ctx.drawImage(wm, pt.x, pt.y, targetW, targetH);
-      ctx.restore();
-    }
-
-    return new Promise(resolve => {
-      can.toBlob(b => resolve(b), 'image/jpeg', quality);
-    });
-  }
-
-  function makeThumb(name, blob) {
-    const box = document.createElement('div');
-    box.className = 'thumb';
-
-    const cap = document.createElement('div');
-    cap.className = 'cap';
-    cap.textContent = name;
-    box.appendChild(cap);
-
-    const url = URL.createObjectURL(blob);
-    const img = new Image();
-    img.onload = () => URL.revokeObjectURL(url);
-    img.src = url;
-    box.appendChild(img);
-
-    gallery.appendChild(box);
-  }
-
-  async function processAll() {
-    const wm = watermarkCache.get(activeWatermarkId);
-    if (!photoFiles.length || !wm) return;
-
-    gallery.innerHTML = "";
-    statusEl.textContent = "Processing (and downloading)…";
-
-    const opts = {
-      position: posEl.value,
-      scalePct: Number(scaleEl.value),
-      opacityPct: Number(opacityEl.value),
-      padding: Number(padEl.value),
-      quality: clamp(Number(qualityEl.value || 0.92), 0.6, 1.0),
-      maxSide: Number(maxSideEl.value || 0)
-    };
-
-    for (let i = 0; i < photoFiles.length; i++) {
-      const f = photoFiles[i];
-      try {
-        const img = await fileToImage(f);
-        const blob = await renderOne(img, wm, opts);
-
-        const outName = f.name
-          .replace(/\.(jpg|jpeg|png|webp|gif|bmp|tif|tiff)$/i, '')
-          + `_wm_${activeWatermarkId}.jpg`;
-
-        downloadBlob(blob, outName);
-        makeThumb(outName, blob);
-
-        statusEl.textContent = `Processed ${i+1} / ${photoFiles.length} (downloaded)`;
-        await new Promise(r => setTimeout(r, 120)); // helps Chrome not block
-      } catch (e) {
-        console.error('Failed:', f.name, e);
-      }
-    }
-
-    statusEl.textContent = `Done: ${photoFiles.length} file(s).`;
-  }
-
-  function populateDropdown() {
-    wmPickEl.innerHTML = "";
-    for (const w of WATERMARKS) {
-      const opt = document.createElement('option');
-      opt.value = w.id;
-      opt.textContent = w.name;
-      wmPickEl.appendChild(opt);
-    }
-    wmPickEl.value = activeWatermarkId;
-  }
-
-  function loadWatermarkById(id) {
-    const item = WATERMARKS.find(x => x.id === id);
-    if (!item) return;
-
-    activeWatermarkId = id;
-    const url = item.url;
-
-    if (!url || url.startsWith("REPLACE_")) {
-      wmStatus.textContent = "❌ Put your watermark URLs in WATERMARKS[] first.";
-      processBtn.disabled = true;
-      return;
-    }
-
-    // Already cached
-    if (watermarkCache.has(id)) {
-      wmStatus.textContent = `✅ Loaded: ${item.name}`;
-      processBtn.disabled = !(photoFiles.length);
-      return;
-    }
-
-    wmStatus.textContent = `Loading: ${item.name}…`;
-    const img = new Image();
-    img.crossOrigin = "anonymous"; // needed for canvas export with remote asset
-    img.onload = () => {
-      watermarkCache.set(id, img);
-      wmStatus.textContent = `✅ Loaded: ${item.name}`;
-      processBtn.disabled = !(photoFiles.length);
-    };
-    img.onerror = () => {
-      wmStatus.textContent = "❌ Failed to load watermark. URL must be public (GitHub Pages works best).";
-      processBtn.disabled = true;
-    };
-    img.src = url;
-  }
-
-  photosEl.addEventListener('change', (e) => {
-    photoFiles = Array.from(e.target.files || []);
-    processBtn.disabled = !(photoFiles.length && watermarkCache.get(activeWatermarkId));
+function fileToImage(f){
+  return new Promise(res=>{
+    const i=new Image();
+    i.onload=()=>res(i);
+    i.src=URL.createObjectURL(f);
   });
+}
 
-  wmPickEl.addEventListener('change', () => {
-    loadWatermarkById(wmPickEl.value);
-    // button enable handled after load
-  });
+function place(pos,W,H,wW,wH,p){
+  const m={
+    "bottom-center":[(W-wW)/2,H-wH-p],
+    "bottom-right":[W-wW-p,H-wH-p],
+    "bottom-left":[p,H-wH-p],
+    "top-right":[W-wW-p,p],
+    "top-left":[p,p],
+    "center":[(W-wW)/2,(H-wH)/2]
+  };
+  return m[pos]||m["bottom-center"];
+}
 
-  processBtn.addEventListener('click', processAll);
+async function renderOne(img,wm){
+  const W=img.width,H=img.height;
+  const c=document.createElement('canvas');
+  c.width=W; c.height=H;
+  const ctx=c.getContext('2d');
+  ctx.drawImage(img,0,0,W,H);
 
-  // init
-  populateDropdown();
-  reset();
-  loadWatermarkById(activeWatermarkId);
+  const wW=W*(scaleEl.value/100);
+  const wH=wW*(wm.height/wm.width);
+  const [x,y]=place(posEl.value,W,H,wW,wH,Number(padEl.value));
+
+  ctx.globalAlpha=opacityEl.value/100;
+  ctx.drawImage(wm,x,y,wW,wH);
+
+  return new Promise(r=>c.toBlob(b=>r(b),'image/jpeg',0.92));
+}
+
+async function preview(){
+  gallery.innerHTML="";
+  const img=await fileToImage(photoFiles[0]);
+  const wm=watermarkCache.get(activeWM);
+  const blob=await renderOne(img,wm);
+  showThumb("PREVIEW",blob);
+}
+
+async function processAll(){
+  gallery.innerHTML="";
+  statusEl.textContent="Processing & downloading…";
+  for(const f of photoFiles){
+    const img=await fileToImage(f);
+    const blob=await renderOne(img,watermarkCache.get(activeWM));
+    const name=f.name.replace(/\.\w+$/,'')+"_wm.jpg";
+    downloadBlob(blob,name);
+    showThumb(name,blob);
+    await new Promise(r=>setTimeout(r,120));
+  }
+  statusEl.textContent="Done.";
+}
+
+function showThumb(name,blob){
+  const d=document.createElement('div');
+  d.className="thumb";
+  const i=new Image();
+  i.src=URL.createObjectURL(blob);
+  const c=document.createElement('div');
+  c.className="cap"; c.textContent=name;
+  d.append(i,c); gallery.appendChild(d);
+}
+
+function loadWM(id){
+  const w=WATERMARKS.find(x=>x.id===id);
+  if(watermarkCache.has(id)){
+    wmStatus.textContent="Loaded "+w.name;
+    return;
+  }
+  const i=new Image();
+  i.crossOrigin="anonymous";
+  i.onload=()=>{
+    watermarkCache.set(id,i);
+    wmStatus.textContent="Loaded "+w.name;
+    previewBtn.disabled=processBtn.disabled=!photoFiles.length;
+  };
+  i.src=w.url;
+}
+
+wmPick.innerHTML=WATERMARKS.map(w=>`<option value="${w.id}">${w.name}</option>`).join("");
+loadWM(activeWM);
+
+photosEl.onchange=e=>{
+  photoFiles=[...e.target.files];
+  previewBtn.disabled=processBtn.disabled=!photoFiles.length;
+};
+
+wmPick.onchange=e=>{ activeWM=e.target.value; loadWM(activeWM); };
+previewBtn.onclick=preview;
+processBtn.onclick=processAll;
+clearBtn.onclick=()=>{ gallery.innerHTML=""; photosEl.value=""; };
 
 })();
 </script>
