@@ -211,8 +211,8 @@ const isSafari = /^((?!chrome|android).)*safari/i.test(ua);
 const useZip = isIOS && isSafari;
 
 deviceNote.textContent = useZip
-  ? "📱 iPhone Safari: downloads ONE ZIP"
-  : "🖥 Desktop/Android: direct downloads";
+  ? "📱 iPhone Safari: Zip болгож татна"
+  : "🖥 Desktop/Android: шууд татна";
 
 opacityVal.textContent = opacityEl.value + '%';
 opacityEl.oninput = () => opacityVal.textContent = opacityEl.value + '%';
@@ -223,7 +223,7 @@ function loadWM(id){
   img.crossOrigin="anonymous";
   img.onload=()=>{
     watermarkCache[id]=img;
-    wmStatus.textContent="Loaded watermark";
+    wmStatus.textContent="Лого уншсан";
     previewBtn.disabled=processBtn.disabled=!photoFiles.length;
   };
   img.src=WATERMARKS[id];
