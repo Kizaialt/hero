@@ -110,14 +110,20 @@ button:disabled { opacity:.55; cursor:not-allowed; }
   <div class="grid">
 
     <div class="card">
-      <h1>Олноор лого оруулах</h1>
+      <h1>Олноор Лого Оруулагч</h1>
 
-      <label>Зураг оруулах</label>
+      <div class="note" id="deviceNote"></div>
+
+      <label>Зураг сонгох (олноор)</label>
       <input id="photos" type="file" accept="image/*" multiple />
 
-      <label>Лого сонгох</label>
-      <select id="wmPick"></select>
-      <div id="wmStatus" class="note">Лого уншиж байна…</div>
+      <label>Лого төрөл</label>
+      <select id="wmPick">
+        <option value="wm1">Үндсэн (шар)</option>
+        <option value="wm2">Цагаан</option>
+        <option value="wm3">Шар (Тойрог хүрээ)</option>
+      </select>
+      <div id="wmStatus" class="note">Лого уншиж байна...</div>
 
       <div class="row">
         <div>
@@ -128,39 +134,39 @@ button:disabled { opacity:.55; cursor:not-allowed; }
             <option value="bottom-left">Доод | Зүүн</option>
             <option value="top-right">Дээд | Баруун</option>
             <option value="top-left">Дээд | Зүүн</option>
-            <option value="center">Голд | Голд</option>
-            <option value="tiled">Tiled</option>
+            <option value="center">Голд</option>
+            <option value="tiled">Олон</option>
           </select>
         </div>
         <div>
-          <label>Хэмжээ (Өргөний %-иар)</label>
+          <label>Хэмжээс (өргөний % иар)</label>
           <input id="scale" type="number" value="15" min="2" max="80" />
         </div>
       </div>
 
       <div class="row">
         <div>
-          <label>Хэр Тод</label>
+          <label>Хэр тод?</label>
           <div style="display:flex;align-items:center;gap:10px;">
             <input id="opacity" type="range" value="100" min="0" max="100" />
-            <span id="opacityVal" style="min-width:40px;font-size:12px;">100%</span>
+            <span id="opacityVal">100%</span>
           </div>
         </div>
         <div>
-          <label>Зай (px)</label>
+          <label>Захаас зай (px)</label>
           <input id="pad" type="number" value="50" />
         </div>
       </div>
 
       <div class="btns">
         <button id="previewBtn" class="secondary" disabled>Урьдчилж харах</button>
-        <button id="processBtn" disabled>Бүгдийг татаж авах</button>
+        <button id="processBtn" disabled>Бүгдийг уншуулах</button>
         <button id="clearBtn" class="secondary">Цэвэрлэх</button>
       </div>
     </div>
 
     <div class="card">
-      <h2>Preview</h2>
+      <h2>Урьдчилан харах</h2>
       <div id="gallery" class="gallery"></div>
       <div id="status" class="note"></div>
     </div>
@@ -168,16 +174,17 @@ button:disabled { opacity:.55; cursor:not-allowed; }
   </div>
 </div>
 
+<script src="https://cdn.jsdelivr.net/npm/jszip@3.10.1/dist/jszip.min.js"></script>
+
 <script>
 (() => {
 const $ = s => document.querySelector(s);
 
-/* 🔴 REPLACE THESE 🔴 */
-const WATERMARKS = [
-  { id: "wm1", name: "Цагаан", url: "https://kizaialt.github.io/hero/wepro.png" },
-  { id: "wm2", name: "Шар",           url: "https://kizaialt.github.io/hero/wepro2.png" },
-  { id: "wm3", name: "Бүтэн Шар",           url: "https://kizaialt.github.io/hero/wepro3.png" },
- ];
+const WATERMARKS = {
+  wm1: "https://raw.githubusercontent.com/Kizaialt/hero/main/wepro2.png",
+  wm2: "https://raw.githubusercontent.com/Kizaialt/hero/main/wepro.png",
+  wm3: "https://raw.githubusercontent.com/Kizaialt/hero/main/wepro3.png"
+};
 
 const photosEl = $('#photos');
 const wmPick = $('#wmPick');
@@ -192,28 +199,52 @@ const processBtn = $('#processBtn');
 const clearBtn = $('#clearBtn');
 const gallery = $('#gallery');
 const statusEl = $('#status');
+const deviceNote = $('#deviceNote');
 
 let photoFiles = [];
-let watermarkCache = new Map();
-let activeWM = WATERMARKS[0].id;
+let watermarkCache = {};
+let activeWM = wmPick.value;
+
+const ua = navigator.userAgent;
+const isIOS = /iP(hone|ad|od)/.test(ua);
+const isSafari = /^((?!chrome|android).)*safari/i.test(ua);
+const useZip = isIOS && isSafari;
+
+deviceNote.textContent = useZip
+  ? "📱 iPhone Safari: downloads ONE ZIP"
+  : "🖥 Desktop/Android: direct downloads";
 
 opacityVal.textContent = opacityEl.value + '%';
-opacityEl.addEventListener('input', () => {
-  opacityVal.textContent = opacityEl.value + '%';
-});
+opacityEl.oninput = () => opacityVal.textContent = opacityEl.value + '%';
 
-function downloadBlob(blob,name){
-  const url=URL.createObjectURL(blob);
-  const a=document.createElement('a');
-  a.href=url; a.download=name;
-  document.body.appendChild(a); a.click(); a.remove();
-  URL.revokeObjectURL(url);
+function loadWM(id){
+  if(watermarkCache[id]) return;
+  const img = new Image();
+  img.crossOrigin="anonymous";
+  img.onload=()=>{
+    watermarkCache[id]=img;
+    wmStatus.textContent="Loaded watermark";
+    previewBtn.disabled=processBtn.disabled=!photoFiles.length;
+  };
+  img.src=WATERMARKS[id];
 }
 
-function fileToImage(f){
-  return new Promise(res=>{
+loadWM(activeWM);
+
+wmPick.onchange=()=>{
+  activeWM=wmPick.value;
+  loadWM(activeWM);
+};
+
+photosEl.onchange=e=>{
+  photoFiles=[...e.target.files];
+  previewBtn.disabled=processBtn.disabled=!photoFiles.length;
+};
+
+async function fileToImage(f){
+  return new Promise(r=>{
     const i=new Image();
-    i.onload=()=>res(i);
+    i.onload=()=>r(i);
     i.src=URL.createObjectURL(f);
   });
 }
@@ -227,87 +258,71 @@ function place(pos,W,H,wW,wH,p){
     "top-left":[p,p],
     "center":[(W-wW)/2,(H-wH)/2]
   };
-  return m[pos]||m["bottom-center"];
+  return m[pos];
 }
 
-async function renderOne(img,wm){
-  const W=img.width,H=img.height;
+async function render(img,wm){
   const c=document.createElement('canvas');
-  c.width=W; c.height=H;
+  c.width=img.width; c.height=img.height;
   const ctx=c.getContext('2d');
-  ctx.drawImage(img,0,0,W,H);
-
-  const wW=W*(scaleEl.value/100);
+  ctx.drawImage(img,0,0);
+  const wW=img.width*(scaleEl.value/100);
   const wH=wW*(wm.height/wm.width);
-  const [x,y]=place(posEl.value,W,H,wW,wH,Number(padEl.value));
-
+  const [x,y]=place(posEl.value,img.width,img.height,wW,wH,Number(padEl.value));
   ctx.globalAlpha=opacityEl.value/100;
   ctx.drawImage(wm,x,y,wW,wH);
-
   return new Promise(r=>c.toBlob(b=>r(b),'image/jpeg',0.92));
 }
 
-function showThumb(name,blob){
+function show(name,blob){
   const d=document.createElement('div');
   d.className="thumb";
-  const i=new Image();
-  i.src=URL.createObjectURL(blob);
-  const c=document.createElement('div');
-  c.className="cap"; c.textContent=name;
-  d.append(i,c);
-  gallery.appendChild(d);
+  const i=new Image(); i.src=URL.createObjectURL(blob);
+  const c=document.createElement('div'); c.className="cap"; c.textContent=name;
+  d.append(i,c); gallery.appendChild(d);
 }
 
-async function preview(){
+previewBtn.onclick=async()=>{
   gallery.innerHTML="";
   const img=await fileToImage(photoFiles[0]);
-  const wm=watermarkCache.get(activeWM);
-  const blob=await renderOne(img,wm);
-  showThumb("PREVIEW",blob);
-}
-
-async function processAll(){
-  gallery.innerHTML="";
-  statusEl.textContent="Processing & downloading…";
-  for(const f of photoFiles){
-    const img=await fileToImage(f);
-    const blob=await renderOne(img,watermarkCache.get(activeWM));
-    const name=f.name.replace(/\.\w+$/,'')+"_wm.jpg";
-    downloadBlob(blob,name);
-    showThumb(name,blob);
-    await new Promise(r=>setTimeout(r,120));
-  }
-  statusEl.textContent="Done.";
-}
-
-function loadWM(id){
-  const w=WATERMARKS.find(x=>x.id===id);
-  if(watermarkCache.has(id)){
-    wmStatus.textContent="Сонгосон "+w.name;
-    return;
-  }
-  const i=new Image();
-  i.crossOrigin="anonymous";
-  i.onload=()=>{
-    watermarkCache.set(id,i);
-    wmStatus.textContent="Сонгосон "+w.name;
-    previewBtn.disabled=processBtn.disabled=!photoFiles.length;
-  };
-  i.src=w.url;
-}
-
-wmPick.innerHTML=WATERMARKS.map(w=>`<option value="${w.id}">${w.name}</option>`).join("");
-loadWM(activeWM);
-
-photosEl.onchange=e=>{
-  photoFiles=[...e.target.files];
-  previewBtn.disabled=processBtn.disabled=!photoFiles.length;
+  const blob=await render(img,watermarkCache[activeWM]);
+  show("PREVIEW",blob);
 };
 
-wmPick.onchange=e=>{ activeWM=e.target.value; loadWM(activeWM); };
-previewBtn.onclick=preview;
-processBtn.onclick=processAll;
-clearBtn.onclick=()=>{ gallery.innerHTML=""; photosEl.value=""; };
+processBtn.onclick=async()=>{
+  gallery.innerHTML="";
+  if(useZip){
+    const zip=new JSZip();
+    for(const f of photoFiles){
+      const img=await fileToImage(f);
+      const blob=await render(img,watermarkCache[activeWM]);
+      zip.file(f.name.replace(/\.\w+$/,'')+"_wm.jpg",blob);
+      show(f.name,blob);
+    }
+    const zipBlob=await zip.generateAsync({type:"blob"});
+    const a=document.createElement('a');
+    a.href=URL.createObjectURL(zipBlob);
+    a.download="watermarked.zip";
+    a.click();
+  }else{
+    for(const f of photoFiles){
+      const img=await fileToImage(f);
+      const blob=await render(img,watermarkCache[activeWM]);
+      const a=document.createElement('a');
+      a.href=URL.createObjectURL(blob);
+      a.download=f.name.replace(/\.\w+$/,'')+"_wm.jpg";
+      a.click();
+      show(f.name,blob);
+      await new Promise(r=>setTimeout(r,120));
+    }
+  }
+};
+
+clearBtn.onclick=()=>{
+  photoFiles=[];
+  photosEl.value="";
+  gallery.innerHTML="";
+};
 
 })();
 </script>
